@@ -64,6 +64,13 @@ static Camera2D camera = {
   0, 1,
 };
 
+typedef struct {
+  float x;
+  float y;
+  float lx;
+  float ly;
+} VerletEntity;
+
 static uint64_t frame_count = 0;
 
 
@@ -121,13 +128,6 @@ float GetHitboxOverlap(Hitbox a, Hitbox b, uint8_t side) {
   if (side == SIDE_LEFT)   return (b.x + b.w) - a.x;
 }
 
-typedef struct {
-  float x;
-  float y;
-  float lx;
-  float ly;
-} VerletEntity;
-
 void VE_Tick (VerletEntity *entity) {
   float dx = entity->x - entity->lx;
   float dy = entity->y - entity->ly;
@@ -158,15 +158,15 @@ BlockType Chunk_GetBlockAtPos(Chunk chunk, BlockPos pos) {
   return chunk.data[CHUNK_WIDTH * pos.x + pos.y];
 }
 
-BlockPos GetChunkPos(BlockPos pos, BlockPos chunk) {
-  // return 
-}
-
-BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
-  BlockPos chunk_pos = {
+BlockPos GetChunkPos(BlockPos pos) {
+  return (BlockPos){
     pos.x / CHUNK_WIDTH - (pos.x < 0 ? 1 : 0),
     pos.y / CHUNK_HEIGHT - (pos.y < 0 ? 1 : 0),
   };
+}
+
+BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
+  BlockPos chunk_pos = GetChunkPos(pos);
   for (int i = 0; i < mng->num; i++) {
     Chunk chunk = mng->chunks[i];
     if (chunk.pos.x == chunk_pos.x && chunk.pos.y == chunk_pos.y) {
@@ -180,7 +180,7 @@ BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
 }
 
 int CM_FillBlockArray(ChunkManager *mng, BlockType *arr, Rectangle rect) {
-
+  
 }
 
 void UpdateDrawFrame() {
