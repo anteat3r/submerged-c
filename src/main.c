@@ -195,8 +195,8 @@ void VE_ApplyForce (VerletEntity *entity, float x, float y) {
 }
 
 void VE_GetSpeed(VerletEntity *entity, float *x, float *y) {
-  *x = *(entity->x - entity->lx) * DELTA_TIME;
-  *y = *(entity->y - entity->ly) * DELTA_TIME;
+  *x = (entity->x - entity->lx) * DELTA_TIME;
+  *y = (entity->y - entity->ly) * DELTA_TIME;
 }
 
 void VE_SetSpeed(VerletEntity *entity, float x, float y) {
@@ -305,6 +305,13 @@ void RemoveChunk(BlockPos pos) {
   for (int i = idx; i < manager.num; i++) {
     manager.chunks[i] = manager.chunks[i + 1];
   }
+}
+
+Chunk CreateEmptyChunk(BlockPos pos) {
+  return (Chunk){
+    .data = malloc(CHUNK_WIDTH * CHUNK_HEIGHT * sizeof(BlockType)),
+    .pos = pos,
+  };
 }
 
 
@@ -432,6 +439,42 @@ void UpdateDrawFrame() {
   BeginDrawing();
   ClearBackground(BLACK);
   BeginMode2D(camera);
+
+  Vector2 topleft = GetScreenToWorld2D((Vector2){0, 0}, camera);
+  Vector2 bottomright = GetScreenToWorld2D(
+    (Vector2){GetScreenWidth(), GetScreenHeight()},
+    camera
+  );
+
+  BlockRect rect = {
+    topleft.x - 1,
+    topleft.y - 1,
+    bottomright.x - topleft.x + 1,
+    bottomright.y - topleft.y + 1,
+  };
+
+  BlockType *arr = malloc(rect.width * rect.height * sizeof(BlockType));
+  FillBlockArray(arr, rect);
+  for (int i = 0; i < rect.width; i++) {
+    for (int j = 0; j < rect.height; j++) {
+      BlockType btype = arr[i * rect.width + j];
+      DrawRectangleV(
+        (Vector2){rect.x + i, rect.y + j},
+        (Vector2){1, 1},
+        btype == BLOCK_EMPTY ? DARKBLUE : RED
+      );
+    }
+  }
+  free(arr);
+
+  DrawRectangleV((Vector2){
+    player.Ventity.x,
+    player.Ventity.y,
+  }, (Vector2){
+    PLAYER_WIDTH,
+    PLAYER_HEIGHT,
+  }, GREEN);
+
   EndMode2D();
   EndDrawing();
 }
@@ -439,6 +482,12 @@ void UpdateDrawFrame() {
 int main() {
   SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(300, 300, "Submerged");
+
+  Chunk chunk = CreateEmptyChunk((BlockPos){0, 0});
+  chunk.data[33] = BLOCK_SAND;
+  AddChunk(chunk);
+
   emscripten_set_main_loop(UpdateDrawFrame, 0, 1);
   CloseWindow();
+  free(manager.chunks);
 }
