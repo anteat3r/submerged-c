@@ -1,9 +1,15 @@
 #include "stdbool.h"
+#include <stdint.h>
 #include <raylib.h>
 #include <stdint.h>
 
 #define CHUNK_WIDTH 100
 #define CHUNK_HEIGHT 100
+
+typedef uint64_t BlockType;
+#define BLOCK_EMPTY 0
+#define BLOCK_SAND 1
+#define BLOCK_GRAVEL 2
 #define FRAME_RATE 60
 #define DELTA_TIME 1.f/FRAME_RATE
 
