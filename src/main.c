@@ -342,7 +342,8 @@ void P_Tick(Player *player) {
 
   player->is_on_ground = false;
 
-
+  player->hitbox->x = player->Ventity.x;
+  player->hitbox->y = player->Ventity.y;
   // resolve collisions
   for (int i = 0; i < rect.width; i++) {
     for (int j = 0; j < rect.height; j++) {
