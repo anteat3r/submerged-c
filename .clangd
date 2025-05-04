@@ -1,0 +1,5 @@
+CompileFlags:
+  Add:
+    - "-std=gnu11"
+    - "-L."
+    - "-I/home/rosta/emsdk/upstream/emscripten/cache/sysroot/include"
