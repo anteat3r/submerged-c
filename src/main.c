@@ -26,6 +26,9 @@ typedef uint8_t SideMask;
 #define SIDE_BOTTOM 4
 #define SIDE_LEFT 8
 
+#define PLAYER_WIDTH 2.f
+#define PLAYER_HEIGHT 5.f
+
 #define GRAVITY 0.1f
 
 // STRUCTS
@@ -244,8 +247,40 @@ int CM_FillBlockArray(ChunkManager *mng, BlockType *arr, BlockRect rect) {
 // PLAYER
 void P_Tick(Player *player) {
   // update state variables
-  player->is_on_ground
 
+  // get the surrounding blocks
+  float p_top = player->Ventity.y;
+  float p_bottom = player->Ventity.y + PLAYER_HEIGHT;
+  float p_left = player->Ventity.x;
+  float p_right = player->Ventity.x + PLAYER_WIDTH;
+  int b_top = (int)p_top - 1;
+  int b_right = (int)p_right + 1;
+  int b_bottom = (int)p_bottom + 1;
+  int b_left = (int)p_left - 1;
+
+  uint width = b_right - b_left + 1;
+  uint height = b_bottom - b_top + 1;
+
+  blocks = (Block*)malloc(width * height * sizeof(Block));
+  if (blocks == NULL) {
+    printf("Failed to allocate memory for surround blocks in P_Tick()\n");
+    return;
+  }
+  
+  for (int i = 0; i < width; i++) {
+    for (int j = 0; j < height; j++) {
+      blocks[i * width + j] = CM_GetBlockAtPos(&CM, (BlockPos){
+        b_left + i, b_top + j,
+      });
+    }
+  }
+
+
+ 
+ 
+ 
+  player->is_on_ground
+  
 
 
   VE_ApplyForce(&player->Ventity, 0, GRAVITY);  // apply gravity
