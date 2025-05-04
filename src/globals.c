@@ -4,6 +4,16 @@
 
 #define CHUNK_WIDTH 100
 #define CHUNK_HEIGHT 100
+#define FRAME_RATE 60
+#define DELTA_TIME 1.f/FRAME_RATE
+
+typedef uint8_t SideMask;
+
+#define TOP    1
+#define RIGHT  2
+#define BOTTOM 4
+#define LEFT   8
+
 
 typedef struct {
   Vector2 pos;
@@ -14,6 +24,22 @@ typedef struct {
   int x;
   int y;
 } BlockPos;
+
+typedef struct {
+  float x;
+  float y;
+  float w;
+  float h;
+} Hitbox;
+
+Hitbox BP_GetHitbox(BlockPos *pos) {
+  return (Hitbox){
+    .x = pos->x,
+    .y = pos->y,
+    .w = 1.f,
+    .h = 1.f
+  }
+}
 
 static Player player = {
   .pos = (Vector2){0, 0},
@@ -36,39 +62,67 @@ bool IsPosSolid(Vector2 pos) {
   return IsBlockSolid(GetBlockPos(pos));
 }
 
-typedef struct {
-  float x;
-  float y;
-  float w;
-  float h;
-} Hitbox;
 
 bool IsHitboxColliding(Hitbox a, Hitbox b) {
   if (a.x <= b.x + b.w && a.x + a.w >= b.x && a.y <= b.y + b.h && a.y + a.h >= b.y) return true;
   return false;
 }
 
-typedef uint8_t SideMask;
 
-#define TOP 1
-#define RIGHT 2
-#define BOTTOM 4
-#define LEFT 8
-
-/* gets the side/s of hitbox a where it collides with hitbox b */
+/* gets the side(s) of hitbox a where it collides with hitbox b */
 SideMask GetHitboxCollision(Hitbox a, Hitbox b) {
-  SideMask res = 0;
-  if (IsHitboxColliding(a, b)) return res;
-  if (a.y + a.h/2 >= b.y - b.h/2 && a.y + a.h/2 <= b.y + b.h/2) res |= TOP;
-  if (a.x + a.w/2 >= b.x - b.w/2 && a.x + a.w/2 <= b.x + b.w/2) res |= RIGHT;
-  if (a.y - a.h/2 >= b.y - b.h/2 && a.y - a.h/2 <= b.y + b.h/2) res |= BOTTOM;
-  if (a.x - a.w/2 >= b.x - b.w/2 && a.x - a.w/2 <= b.x + b.w/2) res |= LEFT;
-  return res;
+    SideMask res = 0;
+    if (!IsHitboxColliding(a, b)) return res;
+
+    // top edge of A lies within the vertical span of B
+    if (a.y >= b.y && a.y <= b.y + b.h) res |= TOP;
+
+    // right edge of A lies within the horizontal span of B
+    if (a.x + a.w >= b.x  && a.x + a.w <= b.x + b.w) res |= RIGHT;
+
+    // bottom edge of A lies within the vertical span of B
+    if (a.y + a.h >= b.y && a.y + a.h <= b.y + b.h) res |= BOTTOM;
+
+    // left edge of A lies within the horizontal span of B
+    if (a.x >= b.x && a.x <= b.x + b.w) res |= LEFT;
+
+    return res;
 }
 
 float GetHitboxOverlap(Hitbox a, Hitbox b, uint8_t side) {
-  if (side == TOP) return a.y + a.h/2 - (b.y - b.y/2);
-  if (side == RIGHT) return a.x + a.w/2 - (b.x - b.x/2);
-  if (side == BOTTOM) return b.y + b.h/2 - (a.y - a.y/2);
-  if (side == LEFT) return b.x + b.w/2 - (a.x - a.x/2);
+  if (side == TOP)    return (a.y + a.h) - b.y;
+  if (side == RIGHT)  return (a.x + a.w) - b.x;
+  if (side == BOTTOM) return (b.y + b.h) - a.y;
+  if (side == LEFT)   return (b.x + b.w) - a.x;
+}
+
+typedef struct {
+  float x;
+  float y;
+  float lx;
+  float ly;
+} VerletEntity;
+
+void VE_Tick (VerletEntity *entity) {
+  float dx = entity->x - entity->lx;
+  float dy = entity->y - entity->ly;
+  entity->lx = entity->x;
+  entity->ly = entity->y;
+  entity->x += dx;
+  entity->y += dy;
+}
+
+void VE_Move (VerletEntity *entity, float x, float y) {
+  entity->x += x;
+  entity->y += y;
+}
+
+void VE_SetPos (VerletEntity *entity, float x, float y) {
+  entity->x = x;
+  entity->y = y;
+}
+
+void VE_ApplyForce (VerletEntity *entity, float x, float y) {
+  entity->lx -= x;
+  entity->ly -= y;
 }
