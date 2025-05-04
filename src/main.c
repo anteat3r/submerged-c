@@ -51,6 +51,13 @@ typedef struct {
   Chunk *chunks;
 } ChunkManager;
 
+typedef struct {
+  float x;
+  float y;
+  float lx;
+  float ly;
+} VerletEntity;
+
 // STATICS
 
 static Player player = {
@@ -63,13 +70,6 @@ static Camera2D camera = {
   (Vector2){0, 0},
   0, 1,
 };
-
-typedef struct {
-  float x;
-  float y;
-  float lx;
-  float ly;
-} VerletEntity;
 
 static uint64_t frame_count = 0;
 
