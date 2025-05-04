@@ -192,8 +192,8 @@ void VE_ApplyForce (VerletEntity *entity, float x, float y) {
 }
 
 void VE_GetSpeed(VerletEntity *entity, float *x, float *y) {
-  *x = *(entity->x - entity->lx) * DELTA_TIME;
-  *y = *(entity->y - entity->ly) * DELTA_TIME;
+  *x = (entity->x - entity->lx) * DELTA_TIME;
+  *y = (entity->y - entity->ly) * DELTA_TIME;
 }
 
 void VE_SetSpeed(VerletEntity *entity, float x, float y) {
