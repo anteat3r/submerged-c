@@ -4,6 +4,7 @@
 #include <emscripten/emscripten.h>
 #include "stdbool.h"
 #include <stdint.h>
+#include <stdlib.h>
 
 // DEFINES
 
@@ -33,6 +34,13 @@ typedef struct {
   int x;
   int y;
 } BlockPos;
+
+typedef struct {
+  int x;
+  int y;
+  int width;
+  int height;
+} BlockRect;
 
 typedef struct {
   float x;
@@ -91,6 +99,10 @@ BlockPos GetBlockPos(Vector2 pos) {
 
 bool IsPosSolid(Vector2 pos) {
   return IsBlockSolid(GetBlockPos(pos));
+}
+
+bool IsXYSolid(float x, float y) {
+  return IsPosSolid((Vector2){x, y});
 }
 
 // HITBOXES
@@ -165,22 +177,46 @@ BlockPos GetChunkPos(BlockPos pos) {
   };
 }
 
-BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
-  BlockPos chunk_pos = GetChunkPos(pos);
-  for (int i = 0; i < mng->num; i++) {
-    Chunk chunk = mng->chunks[i];
-    if (chunk.pos.x == chunk_pos.x && chunk.pos.y == chunk_pos.y) {
-      return Chunk_GetBlockAtPos(chunk, (BlockPos){
-        pos.x % CHUNK_WIDTH,
-        pos.y % CHUNK_HEIGHT,
-      });
-    }
-  }
-  return -1;
+BlockPos GetPosInChunk(BlockPos pos) {
+  return (BlockPos){
+    pos.x % CHUNK_WIDTH + 
+  };
 }
 
-int CM_FillBlockArray(ChunkManager *mng, BlockType *arr, Rectangle rect) {
-  
+Chunk CM_GetChunkAtPos(ChunkManager *mng, BlockPos pos) {
+  for (int i = 0; i < mng->num; i++) {
+    Chunk chunk = mng->chunks[i];
+    if (chunk.pos.x == pos.x && chunk.pos.y == pos.y) {
+      return chunk;
+    }
+  }
+  return (Chunk){ .data = NULL };
+}
+
+BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
+  BlockPos chunk_pos = GetChunkPos(pos);
+  Chunk chunk = CM_GetChunkAtPos(mng, chunk_pos);
+  if (chunk.data == NULL) return -1;
+  return Chunk_GetBlockAtPos(chunk, )
+}
+
+int CM_FillBlockArray(ChunkManager *mng, BlockType *arr, BlockRect rect) {
+  BlockPos topleft_chunk = GetChunkPos((BlockPos){
+    rect.x, rect.y,
+  });
+  BlockPos botright_chunk = GetChunkPos((BlockPos){
+    rect.x + rect.width, rect.y + rect.height,
+  });
+  BlockPos rect_size = {
+    botright_chunk.x - topleft_chunk.x + 1,
+    botright_chunk.y - topleft_chunk.y + 1,
+  };
+  Chunk *chunk_arr = malloc(rect_size.x * rect_size.y * sizeof(Chunk*));
+  for (int i = 0; i < rect_size.x; i++) {
+    for (int j = 0; j < rect_size.y; j++) {
+
+    }
+  }
 }
 
 void UpdateDrawFrame() {
