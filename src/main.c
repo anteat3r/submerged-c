@@ -1,6 +1,7 @@
 // INCLUDES
 
 #include "raylib.h"
+#include <cstdlib>
 #include <emscripten/emscripten.h>
 #include "stdbool.h"
 #include <stdint.h>
@@ -67,6 +68,7 @@ typedef struct {
 
 typedef struct {
   int num;
+  int cap;
   Chunk *chunks;
 } ChunkManager;
 
@@ -90,7 +92,7 @@ static Camera2D camera = {
   0, 1,
 };
 
-static ChunkManager manager = { 0, NULL, };
+static ChunkManager manager = { 0, 0, NULL, };
 
 static uint64_t frame_count = 0;
 
@@ -151,6 +153,15 @@ float GetHitboxOverlap(Hitbox a, Hitbox b, uint8_t side) {
   if (side == SIDE_RIGHT)  return (a.x + a.w) - b.x;
   if (side == SIDE_BOTTOM) return (b.y + b.h) - a.y;
   if (side == SIDE_LEFT)   return (b.x + b.w) - a.x;
+}
+
+Hitbox BP_GetHitbox(BlockPos *pos) {
+  return (Hitbox){
+    .x = pos->x,
+    .y = pos->y,
+    .w = 1.f,
+    .h = 1.f
+  };
 }
 
 
@@ -220,6 +231,16 @@ Chunk GetChunkAtPos(BlockPos pos) {
   return (Chunk){ .data = NULL };
 }
 
+int GetChunkIdxAtPos(BlockPos pos) {
+  for (int i = 0; i < manager.num; i++) {
+    Chunk chunk = manager.chunks[i];
+    if (chunk.pos.x == pos.x && chunk.pos.y == pos.y) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 BlockType GetBlockAtPos(BlockPos pos) {
   BlockPos chunk_pos = GetChunkPos(pos);
   Chunk chunk = GetChunkAtPos(chunk_pos);
@@ -258,6 +279,29 @@ void FillBlockArray(BlockType *arr, BlockRect rect) {
     }
   }
   free(chunk_arr);
+}
+
+void AddChunk(Chunk chunk) {
+  manager.num++;
+  if (manager.chunks == NULL) {
+    manager.chunks = malloc(sizeof(Chunk));
+    manager.cap = 1;
+  } else if (manager.num < manager.cap) {
+    manager.chunks = realloc(manager.chunks, manager.num);
+    manager.cap = manager.num;
+  }
+  manager.chunks[manager.num - 1] = chunk;
+}
+
+void RemoveChunk(BlockPos pos) {
+  int idx = GetChunkIdxAtPos(pos);
+  if (idx == -1) return;
+  Chunk chunk = manager.chunks[idx];
+  free(chunk.data);
+  manager.num--;
+  for (int i = idx; i < manager.num; i++) {
+    manager.chunks[i] = manager.chunks[i + 1];
+  }
 }
 
 
