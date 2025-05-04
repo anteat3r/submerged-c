@@ -15,10 +15,14 @@ BlockType Chunk_GetBlockAtPos(Chunk chunk, BlockPos pos) {
   return chunk.data[CHUNK_WIDTH * pos.x + pos.y];
 }
 
+BlockPos GetChunkPos(BlockPos pos, BlockPos chunk) {
+  return 
+}
+
 BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
   BlockPos chunk_pos = {
-    pos.x / CHUNK_WIDTH,
-    pos.y / CHUNK_HEIGHT,
+    pos.x / CHUNK_WIDTH - (pos.x < 0 ? 1 : 0),
+    pos.y / CHUNK_HEIGHT - (pos.y < 0 ? 1 : 0),
   };
   for (int i = 0; i < mng->num; i++) {
     Chunk chunk = mng->chunks[i];
@@ -30,4 +34,8 @@ BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
     }
   }
   return -1;
+}
+
+int CM_FillBlockArray(ChunkManager *mng, BlockType *arr, Rectangle rect) {
+
 }
