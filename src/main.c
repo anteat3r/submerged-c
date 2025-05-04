@@ -32,6 +32,9 @@ typedef uint8_t SideMask;
 
 #define GRAVITY 0.1f
 
+#define PLAYER_SPEED 0.05f
+#define PLAYER_JUMP_POWER 10.f
+#define PLAYER_DRAG 0.1f
 // STRUCTS
 
 typedef struct {
@@ -128,7 +131,7 @@ bool IsHitboxColliding(Hitbox a, Hitbox b) {
 }
 
 
-/* gets the side(s) of hitbox a where it collides with hitbox b */
+/* gets the side(s) of hitbox A where it collides with hitbox B */
 SideMask GetHitboxCollision(Hitbox a, Hitbox b) {
     SideMask res = 0;
     if (!IsHitboxColliding(a, b)) return res;
@@ -330,24 +333,90 @@ void P_Tick(Player *player) {
 
   FillBlockArray(blocks, rect);
 
-  player->is_on_ground
+  player->is_on_ground = false;
 
+
+  // resolve collisions
   for (int i = 0; i < rect.width; i++) {
     for (int j = 0; j < rect.height; j++) {
       int x = rect.x + i;
       int y = rect.y + j;
       BlockPos pos = {x, y};
-      BP
+      Hitbox hitbox = BP_GetHitbox(&pos);
+
+      if (blocks[i * rect.width + j] != BLOCK_EMPTY) {
+        if (IsHitboxColliding(player->hitbox, hitbox)) {
+          // fix the smallest overlap
+          float overlaps[4];
+          uint smallest_overlap_idx = 0;
+          uint biggest_overlap_idx = 0;
+          overlaps[0] = GetHitboxOverlap(player->hitbox, hitbox, SIDE_TOP);
+          overlaps[1] = GetHitboxOverlap(player->hitbox, hitbox, SIDE_RIGHT);
+          overlaps[2] = GetHitboxOverlap(player->hitbox, hitbox, SIDE_BOTTOM);
+          overlaps[3] = GetHitboxOverlap(player->hitbox, hitbox, SIDE_LEFT);
+          float min_overlap = overlaps[0];
+          float max_overlap = overlaps[2]; // side bottom has priority in a tie
+          for (int k = 0; k < 4; k++) {
+            if (overlaps[k] < min_overlap) {
+              min_overlap = overlaps[k];
+              smallest_overlap_idx = k;
+            }
+            if (overlaps[k] > max_overlap) {
+              max_overlap = overlaps[k];
+              biggest_overlap_idx = k;
+            }
+          }
+          
+          if (smallest_overlap_idx == 0) {
+            VE_MoveBy(&player->Ventity, 0, min_overlap);
+          }
+          else if (smallest_overlap_idx == 1) {
+            VE_MoveBy(&player->Ventity, min_overlap, 0);
+          }
+          else if (smallest_overlap_idx == 2) {
+            VE_MoveBy(&player->Ventity, 0, -min_overlap);
+          }
+          else {
+            VE_MoveBy(&player->Ventity, -min_overlap, 0);
+          }
+          
+          VE_SetSpeed(&player->Ventity, 0, 0);
+          
+          if (biggest_overlap_idx == 2) {  // if the player's bottom of its hitbox is touching some block
+            player->is_on_ground = true;
+          }
+        }
+      }
+
+
+
+
       blocks[i * rect.width + j]
     }
   }
 
 
   VE_ApplyForce(&player->Ventity, 0, GRAVITY);  // apply gravity
-  if (IsKeyDown(KEY_W)) {
-    VE_ApplyForce(&player->Ventity, 0, -10);
+
+  if (IsKeyDown(KEY_W) && player->is_on_ground) {
+    VE_ApplyForce(&player->Ventity, 0, -PLAYER_JUMP_POWER);
   }
+  if (IsKeyDown(KEY_A)) {
+    VE_ApplyForce(&player->Ventity, -PLAYER_SPEED, 0);
+  }
+  if (IsKeyDown(KEY_D)) {
+    VE_ApplyForce(&player->Ventity, PLAYER_SPEED, 0);
+  }
+
+  // apply drag
+  float speed_x;
+  float speed_y;
+  VE_GetSpeed(&player->Ventity, &speed_x, &speed_y);
+
+  VE_ApplyForce(&player->Ventity, -speed_x * PLAYER_DRAG, -speed_y * PLAYER_DRAG);
   VE_Tick(&player->Ventity);
+
+  free(blocks);
 }
 
 void UpdateDrawFrame() {
