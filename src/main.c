@@ -93,23 +93,63 @@ bool IsHitboxColliding(Hitbox a, Hitbox b) {
   return false;
 }
 
-/* gets the side/s of hitbox a where it collides with hitbox b */
+
+/* gets the side(s) of hitbox a where it collides with hitbox b */
 SideMask GetHitboxCollision(Hitbox a, Hitbox b) {
-  SideMask res = 0;
-  if (IsHitboxColliding(a, b)) return res;
-  if (a.y + a.h/2 >= b.y - b.h/2 && a.y + a.h/2 <= b.y + b.h/2) res |= SIDE_TOP;
-  if (a.x + a.w/2 >= b.x - b.w/2 && a.x + a.w/2 <= b.x + b.w/2) res |= SIDE_RIGHT;
-  if (a.y - a.h/2 >= b.y - b.h/2 && a.y - a.h/2 <= b.y + b.h/2) res |= SIDE_BOTTOM;
-  if (a.x - a.w/2 >= b.x - b.w/2 && a.x - a.w/2 <= b.x + b.w/2) res |= SIDE_LEFT;
-  return res;
+    SideMask res = 0;
+    if (!IsHitboxColliding(a, b)) return res;
+
+    // top edge of A lies within the vertical span of B
+    if (a.y >= b.y && a.y <= b.y + b.h) res |= SIDE_TOP;
+
+    // right edge of A lies within the horizontal span of B
+    if (a.x + a.w >= b.x  && a.x + a.w <= b.x + b.w) res |= SIDE_RIGHT;
+
+    // bottom edge of A lies within the vertical span of B
+    if (a.y + a.h >= b.y && a.y + a.h <= b.y + b.h) res |= SIDE_BOTTOM;
+
+    // left edge of A lies within the horizontal span of B
+    if (a.x >= b.x && a.x <= b.x + b.w) res |= SIDE_LEFT;
+
+    return res;
 }
 
 float GetHitboxOverlap(Hitbox a, Hitbox b, uint8_t side) {
-  if (side == SIDE_TOP) return a.y + a.h/2 - (b.y - b.y/2);
-  if (side == SIDE_RIGHT) return a.x + a.w/2 - (b.x - b.x/2);
-  if (side == SIDE_BOTTOM) return b.y + b.h/2 - (a.y - a.y/2);
-  if (side == SIDE_LEFT) return b.x + b.w/2 - (a.x - a.x/2);
-  return 0;
+  if (side == SIDE_TOP)    return (a.y + a.h) - b.y;
+  if (side == SIDE_RIGHT)  return (a.x + a.w) - b.x;
+  if (side == SIDE_BOTTOM) return (b.y + b.h) - a.y;
+  if (side == SIDE_LEFT)   return (b.x + b.w) - a.x;
+}
+
+typedef struct {
+  float x;
+  float y;
+  float lx;
+  float ly;
+} VerletEntity;
+
+void VE_Tick (VerletEntity *entity) {
+  float dx = entity->x - entity->lx;
+  float dy = entity->y - entity->ly;
+  entity->lx = entity->x;
+  entity->ly = entity->y;
+  entity->x += dx;
+  entity->y += dy;
+}
+
+void VE_Move (VerletEntity *entity, float x, float y) {
+  entity->x += x;
+  entity->y += y;
+}
+
+void VE_SetPos (VerletEntity *entity, float x, float y) {
+  entity->x = x;
+  entity->y = y;
+}
+
+void VE_ApplyForce (VerletEntity *entity, float x, float y) {
+  entity->lx -= x;
+  entity->ly -= y;
 }
 
 // CHUNKS
