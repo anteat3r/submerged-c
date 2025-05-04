@@ -1,6 +1,9 @@
 #include "stdbool.h"
 #include <raylib.h>
 
+#define CHUNK_WIDTH 100
+#define CHUNK_HEIGHT 100
+
 typedef struct {
   Vector2 pos;
   Vector2 last_pos;
@@ -12,8 +15,8 @@ typedef struct {
 } BlockPos;
 
 static Player player = {
-  (Vector2){0, 0},
-  (Vector2){0, 0},
+  .pos = (Vector2){0, 0},
+  .last_pos = (Vector2){0, 0},
 };
 
 bool IsBlockSolid(BlockPos pos) {
