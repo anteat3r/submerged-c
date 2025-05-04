@@ -220,14 +220,14 @@ Chunk GetChunkAtPos(BlockPos pos) {
   return (Chunk){ .data = NULL };
 }
 
-BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
+BlockType GetBlockAtPos(BlockPos pos) {
   BlockPos chunk_pos = GetChunkPos(pos);
   Chunk chunk = GetChunkAtPos(chunk_pos);
   if (chunk.data == NULL) return -1;
   return Chunk_GetBlockAtPos(chunk, GetPosInChunk(pos));
 }
 
-void FillBlockArray(BlockType **arr, BlockRect rect) {
+void FillBlockArray(BlockType *arr, BlockRect rect) {
   BlockPos topleft_chunk = GetChunkPos((BlockPos){
     rect.x, rect.y,
   });
@@ -238,23 +238,23 @@ void FillBlockArray(BlockType **arr, BlockRect rect) {
     botright_chunk.x - topleft_chunk.x + 1,
     botright_chunk.y - topleft_chunk.y + 1,
   };
-  Chunk **chunk_arr = malloc(rect_size.x * rect_size.y * sizeof(Chunk*));
+  Chunk *chunk_arr = malloc(rect_size.x * rect_size.y * sizeof(Chunk*));
   if (chunk_arr == NULL) return;
   for (int i = 0; i < rect_size.x; i++) {
     for (int j = 0; j < rect_size.y; j++) {
-      chunk_arr[i][j] = GetChunkAtPos((BlockPos){i, j});
+      chunk_arr[i * rect_size.x + j] = GetChunkAtPos((BlockPos){i, j});
     }
   }
   for (int i = 0; i < rect.width; i++) {
     for (int j = 0; j < rect.height; j++) {
       BlockPos pos = {rect.x + i, rect.y + j};
       BlockPos ch_pos = GetChunkPos(pos);
-      Chunk chunk = chunk_arr[ch_pos.x][ch_pos.y];
+      Chunk chunk = chunk_arr[ch_pos.x * rect_size.x + ch_pos.y];
       if (chunk.data == NULL) {
-        arr[i][j] = -1;
+        arr[i * rect.width + j] = -1;
         continue;
       }
-      arr[i][j] = Chunk_GetBlockAtPos(chunk, pos);
+      arr[i * rect.width + j] = Chunk_GetBlockAtPos(chunk, pos);
     }
   }
   free(chunk_arr);
