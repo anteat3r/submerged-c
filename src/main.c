@@ -270,27 +270,21 @@ void P_Tick(Player *player) {
   float p_bottom = player->Ventity.y + PLAYER_HEIGHT;
   float p_left = player->Ventity.x;
   float p_right = player->Ventity.x + PLAYER_WIDTH;
-  int b_top = (int)p_top - 1;
-  int b_right = (int)p_right + 1;
-  int b_bottom = (int)p_bottom + 1;
-  int b_left = (int)p_left - 1;
 
-  uint width = b_right - b_left + 1;
-  uint height = b_bottom - b_top + 1;
+  BlockRect rect = {
+    .x = (int)p_left - 1,
+    .y = (int)p_top - 1,
+    .width = (int)p_right - (int)p_left + 3,
+    .height = (int)p_bottom - (int)p_top + 3,
+  };
 
-  blocks = (Block*)malloc(width * height * sizeof(Block));
+  blocks = (BlockType*)malloc(rect.width * rect.height * sizeof(BlockType));
   if (blocks == NULL) {
     printf("Failed to allocate memory for surround blocks in P_Tick()\n");
     return;
   }
-  
-  for (int i = 0; i < width; i++) {
-    for (int j = 0; j < height; j++) {
-      blocks[i * width + j] = CM_GetBlockAtPos(&CM, (BlockPos){
-        b_left + i, b_top + j,
-      });
-    }
-  }
+
+  FillBlockArray(blocks, rect);
 
 
  
