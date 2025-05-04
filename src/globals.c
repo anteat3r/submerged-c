@@ -1,8 +1,15 @@
 #include "stdbool.h"
+#include <stdint.h>
 #include <raylib.h>
+#include <stdint.h>
 
 #define CHUNK_WIDTH 100
 #define CHUNK_HEIGHT 100
+
+typedef uint64_t BlockType;
+#define BLOCK_EMPTY 0
+#define BLOCK_SAND 1
+#define BLOCK_GRAVEL 2
 
 typedef struct {
   Vector2 pos;
