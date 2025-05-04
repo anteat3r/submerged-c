@@ -8,8 +8,9 @@
 
 typedef uint64_t BlockType;
 #define BLOCK_EMPTY 0
-#define BLOCK_SAND 1
-#define BLOCK_GRAVEL 2
+#define BLOCK_WATER 1
+#define BLOCK_SAND 2
+#define BLOCK_GRAVEL 3
 
 typedef struct {
   Vector2 pos;
