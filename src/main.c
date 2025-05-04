@@ -79,6 +79,8 @@ static Camera2D camera = {
   0, 1,
 };
 
+static ChunkManager manager = { 0, NULL, };
+
 static uint64_t frame_count = 0;
 
 
@@ -179,13 +181,14 @@ BlockPos GetChunkPos(BlockPos pos) {
 
 BlockPos GetPosInChunk(BlockPos pos) {
   return (BlockPos){
-    pos.x % CHUNK_WIDTH + 
+    pos.x % CHUNK_WIDTH + (pos.x < 0 ? CHUNK_WIDTH : 0),
+    pos.y % CHUNK_HEIGHT + (pos.y < 0 ? CHUNK_HEIGHT : 0),
   };
 }
 
-Chunk CM_GetChunkAtPos(ChunkManager *mng, BlockPos pos) {
-  for (int i = 0; i < mng->num; i++) {
-    Chunk chunk = mng->chunks[i];
+Chunk GetChunkAtPos(BlockPos pos) {
+  for (int i = 0; i < manager.num; i++) {
+    Chunk chunk = manager.chunks[i];
     if (chunk.pos.x == pos.x && chunk.pos.y == pos.y) {
       return chunk;
     }
@@ -195,12 +198,12 @@ Chunk CM_GetChunkAtPos(ChunkManager *mng, BlockPos pos) {
 
 BlockType CM_GetBlockAtPos(ChunkManager *mng, BlockPos pos) {
   BlockPos chunk_pos = GetChunkPos(pos);
-  Chunk chunk = CM_GetChunkAtPos(mng, chunk_pos);
+  Chunk chunk = GetChunkAtPos(chunk_pos);
   if (chunk.data == NULL) return -1;
-  return Chunk_GetBlockAtPos(chunk, )
+  return Chunk_GetBlockAtPos(chunk, GetPosInChunk(pos));
 }
 
-int CM_FillBlockArray(ChunkManager *mng, BlockType *arr, BlockRect rect) {
+void FillBlockArray(BlockType **arr, BlockRect rect) {
   BlockPos topleft_chunk = GetChunkPos((BlockPos){
     rect.x, rect.y,
   });
@@ -211,13 +214,29 @@ int CM_FillBlockArray(ChunkManager *mng, BlockType *arr, BlockRect rect) {
     botright_chunk.x - topleft_chunk.x + 1,
     botright_chunk.y - topleft_chunk.y + 1,
   };
-  Chunk *chunk_arr = malloc(rect_size.x * rect_size.y * sizeof(Chunk*));
+  Chunk **chunk_arr = malloc(rect_size.x * rect_size.y * sizeof(Chunk*));
+  if (chunk_arr == NULL) return;
   for (int i = 0; i < rect_size.x; i++) {
     for (int j = 0; j < rect_size.y; j++) {
-
+      chunk_arr[i][j] = GetChunkAtPos((BlockPos){i, j});
     }
   }
+  for (int i = 0; i < rect.width; i++) {
+    for (int j = 0; j < rect.height; j++) {
+      BlockPos pos = {rect.x + i, rect.y + j};
+      BlockPos ch_pos = GetChunkPos(pos);
+      Chunk chunk = chunk_arr[ch_pos.x][ch_pos.y];
+      if (chunk.data == NULL) {
+        arr[i][j] = -1;
+        continue;
+      }
+      arr[i][j] = Chunk_GetBlockAtPos(chunk, pos);
+    }
+  }
+  free(chunk_arr);
 }
+
+void LoadChunk() {}
 
 void UpdateDrawFrame() {
   frame_count++;
