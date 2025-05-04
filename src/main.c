@@ -257,8 +257,6 @@ void FillBlockArray(BlockType **arr, BlockRect rect) {
   free(chunk_arr);
 }
 
-<<<<<<< HEAD
-=======
 
 // PLAYER
 void P_Tick(Player *player) {
@@ -273,9 +271,6 @@ void P_Tick(Player *player) {
   }
   VE_Tick(&player->Ventity);
 }
-
-
->>>>>>> a1a2be78cfb81d88febce7db68990d8a4d070329
 
 void UpdateDrawFrame() {
   frame_count++;
