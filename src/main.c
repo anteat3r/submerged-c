@@ -8,6 +8,9 @@
 
 // DEFINES
 
+#define FRAME_RATE 60
+#define DELTA_TIME 1.0f / FRAME_RATE
+
 #define CHUNK_WIDTH 100
 #define CHUNK_HEIGHT 100
 
@@ -23,11 +26,16 @@ typedef uint8_t SideMask;
 #define SIDE_BOTTOM 4
 #define SIDE_LEFT 8
 
+#define GRAVITY 0.1f
+
 // STRUCTS
 
 typedef struct {
-  Vector2 pos;
-  Vector2 last_pos;
+  VerletEntity Ventity;
+  Hitbox hitbox;
+  bool is_on_ground;
+  bool can_swim;
+  bool is_swimming;
 } Player;
 
 typedef struct {
@@ -142,6 +150,9 @@ float GetHitboxOverlap(Hitbox a, Hitbox b, uint8_t side) {
   if (side == SIDE_LEFT)   return (b.x + b.w) - a.x;
 }
 
+
+// VERLET ENTITY
+
 void VE_Tick (VerletEntity *entity) {
   float dx = entity->x - entity->lx;
   float dy = entity->y - entity->ly;
@@ -151,7 +162,7 @@ void VE_Tick (VerletEntity *entity) {
   entity->y += dy;
 }
 
-void VE_Move (VerletEntity *entity, float x, float y) {
+void VE_MoveBy (VerletEntity *entity, float x, float y) {
   entity->x += x;
   entity->y += y;
 }
@@ -164,6 +175,16 @@ void VE_SetPos (VerletEntity *entity, float x, float y) {
 void VE_ApplyForce (VerletEntity *entity, float x, float y) {
   entity->lx -= x;
   entity->ly -= y;
+}
+
+void VE_GetSpeed(VerletEntity *entity, float *x, float *y) {
+  *x = *(entity->x - entity->lx) * DELTA_TIME;
+  *y = *(entity->y - entity->ly) * DELTA_TIME;
+}
+
+void VE_SetSpeed(VerletEntity *entity, float x, float y) {
+  entity->lx = entity->x - x * DELTA_TIME;
+  entity->ly = entity->y - y * DELTA_TIME;
 }
 
 // CHUNKS
@@ -236,7 +257,25 @@ void FillBlockArray(BlockType **arr, BlockRect rect) {
   free(chunk_arr);
 }
 
-void LoadChunk() {}
+<<<<<<< HEAD
+=======
+
+// PLAYER
+void P_Tick(Player *player) {
+  // update state variables
+  player->is_on_ground
+
+
+
+  VE_ApplyForce(&player->Ventity, 0, GRAVITY);  // apply gravity
+  if (IsKeyDown(KEY_W)) {
+    VE_ApplyForce(&player->Ventity, 0, -10);
+  }
+  VE_Tick(&player->Ventity);
+}
+
+
+>>>>>>> a1a2be78cfb81d88febce7db68990d8a4d070329
 
 void UpdateDrawFrame() {
   frame_count++;
