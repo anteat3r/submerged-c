@@ -286,12 +286,17 @@ void P_Tick(Player *player) {
 
   FillBlockArray(blocks, rect);
 
-
- 
- 
- 
   player->is_on_ground
-  
+
+  for (int i = 0; i < rect.width; i++) {
+    for (int j = 0; j < rect.height; j++) {
+      int x = rect.x + i;
+      int y = rect.y + j;
+      BlockPos pos = {x, y};
+      BP
+      blocks[i * rect.width + j]
+    }
+  }
 
 
   VE_ApplyForce(&player->Ventity, 0, GRAVITY);  // apply gravity
